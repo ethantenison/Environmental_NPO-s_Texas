@@ -1,0 +1,47 @@
+---
+title: "Environmental Non-Profits in Texas from 2013-2018"
+output: html_notebook
+---
+
+
+
+```{r}
+library(tidyverse)
+library(ggmap)
+library(janitor)
+
+df <- read.csv("texas_20132018_envorgs_matched.csv")
+df <- clean_names(df)
+df <- select(df, ein, real_year, taxpayer_name, name, address, city, state, zip5, fips, assets, income)
+```
+
+
+```{r,Preprocessing}
+
+df_filled <- df %>% group_by(ein) %>% fill(taxpayer_name) %>% fill(taxpayer_name, .direction = "up") %>% fill(address) %>% fill(address, .direction = "up") %>% fill(city) %>% fill(city, .direction = "up") %>% fill(state) %>% fill(state, .direction = "up")
+
+#df_filled <- df_filled %>% mutate_all(na_if,"")
+df_filled$taxpayer_name <- as.character(df_filled$taxpayer_name)
+df_filled$name <- as.character(df_filled$name)
+          
+for (i in 1:length(df_filled$taxpayer_name)){
+           if(df_filled$taxpayer_name[i] == ""){        
+                    df_filled$taxpayer_name[i] <- df_filled$name[i]              
+           }
+}
+
+for (i in 1:length(df_filled$taxpayer_name)){
+           if(is.na(df_filled$taxpayer_name[i])){        
+                    df_filled$taxpayer_name[i] <- df_filled$name[i]              
+           }
+}
+
+df_filled <- select(df_filled, ein, real_year, taxpayer_name,address, city, state, zip5, fips, assets, income)
+
+df_filled <- filter(df_filled, address != "")
+```
+
+```{R}
+addresses <- select(df, ein, taxpayer_name, address, city, state)
+
+```
