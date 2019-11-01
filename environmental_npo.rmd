@@ -14,6 +14,14 @@ library(mapproj)
 library(maptools)
 library(dplyr)
 library(sf)
+library(viridis) # nice color palette
+library(ggplot2) # plotting
+library(ggmap) # ggplot functionality for maps
+library(dplyr) # use for fixing up data
+library(readr) # reading in data/csv
+library(RColorBrewer) # for color palettes
+library(purrr) # for mapping over a function
+library(magick)
 
 
 df <- read.csv("texas_20132018_envorgs_matched.csv")
@@ -21,7 +29,8 @@ df <- clean_names(df)
 df <- dplyr::select(df, ein, real_year, taxpayer_name, name, address, city, state, zip5, fips, assets, income)
 
 
-county_map <- readOGR("Texas_County_Boundaries_Detailed.shp")
+#county_map <- readOGR("Texas_County_Boundaries_Detailed.shp")
+#county_map@data <- clean_names(county_map@data)
 ```
 
 
@@ -50,7 +59,22 @@ df_filled <- select(df_filled, ein, real_year, taxpayer_name,address, city, stat
 df_filled <- filter(df_filled, address != "")
 ```
 
-```{R}
-addresses <- select(df, ein, taxpayer_name, address, city, state)
+```{R, group by county}
+
+df_county <- df_filled %>% group_by(real_year, fips) %>% summarize(total_assets = sum(assets), total_income = sum(income))
+
+```
+
+```{R, map}
+tx <- get_map(
+  #location='california',
+  c(lon=-100.253489,lat=30.844382),
+  zoom=6,crop=T,
+  scale="auto",color="color",source="google",
+  maptype="terrain") # can change to terrain
+
+gg <- ggmap(tx, extent='panel',padding=0) 
+
+ggmap(tx, extent='panel',padding=0) 
 
 ```
