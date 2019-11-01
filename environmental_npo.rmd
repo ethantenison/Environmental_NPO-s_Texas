@@ -5,7 +5,7 @@ output: html_notebook
 
 
 
-```{r}
+```{r, loading data & libraries}
 library(tidyverse)
 library(ggmap)
 library(janitor)
@@ -22,6 +22,8 @@ library(readr) # reading in data/csv
 library(RColorBrewer) # for color palettes
 library(purrr) # for mapping over a function
 library(magick)
+library(maps)
+library(ggplot2)
 
 
 df <- read.csv("texas_20132018_envorgs_matched.csv")
@@ -41,6 +43,9 @@ df_filled <- df %>% group_by(ein) %>% fill(taxpayer_name) %>% fill(taxpayer_name
 #df_filled <- df_filled %>% mutate_all(na_if,"")
 df_filled$taxpayer_name <- as.character(df_filled$taxpayer_name)
 df_filled$name <- as.character(df_filled$name)
+df_filled$address <- as.character(df_filled$address)
+df_filled$city <- as.character(df_filled$city)
+df_filled$state <- as.character(df_filled$state)
           
 for (i in 1:length(df_filled$taxpayer_name)){
            if(df_filled$taxpayer_name[i] == ""){        
@@ -54,9 +59,30 @@ for (i in 1:length(df_filled$taxpayer_name)){
            }
 }
 
+for (i in 1:length(df_filled$assets)){
+           if(df_filled$assets[i] == 0){        
+                    df_filled$assets[i] <- 1              
+           }
+}
+
 df_filled <- select(df_filled, ein, real_year, taxpayer_name,address, city, state, zip5, fips, assets, income)
 
+
 df_filled <- filter(df_filled, address != "")
+df_filled <- mutate(df_filled, full_address = paste(address, city, state, sep = ", "))
+df_filled <- mutate(df_filled, full_address2 = paste(full_address, zip5))
+df_filled <- select(df_filled, ein, real_year, taxpayer_name, full_address2, fips, assets, income)
+df_filled <- rename( df_filled, address = full_address2, name = taxpayer_name)
+
+
+```
+
+```{r, geocoding}
+geocoded_df <- df_filled %>% mutate_geocode(address)
+geocoded_df2017 <- filter(geocoded_df, real_year == 2017)
+
+write.csv(geocoded_df,"geocoded_df.csv")
+
 ```
 
 ```{R, group by county}
@@ -66,15 +92,29 @@ df_county <- df_filled %>% group_by(real_year, fips) %>% summarize(total_assets 
 ```
 
 ```{R, map}
+
+
+
+geocoded_df2017$name <- as.factor(geocoded_df2017$name)
+
+geocoded_df2017 <- geocoded_df2017 %>% arrange(desc(assets)) 
+
+
+
+options("scipen"=100, "digits"=0)
 tx <- get_map(
-  #location='california',
+  #location='texas',
   c(lon=-100.253489,lat=30.844382),
   zoom=6,crop=T,
-  scale="auto",color="color",source="google",
+  scale="auto",color="bw",source="google",
   maptype="terrain") # can change to terrain
 
 gg <- ggmap(tx, extent='panel',padding=0) 
 
-ggmap(tx, extent='panel',padding=0) 
+map <- gg + geom_point(data = geocoded_df2017, aes(x=lon, y=lat, size=assets, color=assets, alpha=0.5), shape=20, stroke=4) + scale_color_viridis(option="viridis", trans="log", name="Assets in log $", direction = -1) + ggtitle("Distribution of Environmental NPO's in Texas (By asset size)") +guides(alpha = FALSE, size = FALSE) + theme(legend.position=c(.9,.15) , panel.grid = element_blank(),axis.title.y = element_blank(), axis.title.x = element_blank(), axis.ticks = element_blank(), rect = element_blank(), plot.title = element_text(size= 25, vjust = 1, hjust= 0.1, color = "#060418FF", margin = margin(b = -0.1, t = 0.4, l = 2, unit = "cm")), plot.background = element_rect(fill = "#f5f5f2", color = NA), panel.background = element_rect(fill = "#f5f5f2", color = NA), legend.background = element_rect(fill = "#f5f5f2", color = NA),) 
+   
+map     
+        
+
 
 ```
