@@ -9,10 +9,19 @@ output: html_notebook
 library(tidyverse)
 library(ggmap)
 library(janitor)
+library(rgdal)
+library(mapproj)
+library(maptools)
+library(dplyr)
+library(sf)
+
 
 df <- read.csv("texas_20132018_envorgs_matched.csv")
 df <- clean_names(df)
-df <- select(df, ein, real_year, taxpayer_name, name, address, city, state, zip5, fips, assets, income)
+df <- dplyr::select(df, ein, real_year, taxpayer_name, name, address, city, state, zip5, fips, assets, income)
+
+
+county_map <- readOGR("Texas_County_Boundaries_Detailed.shp")
 ```
 
 
