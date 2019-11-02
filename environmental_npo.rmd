@@ -24,7 +24,7 @@ library(purrr) # for mapping over a function
 library(magick)
 library(maps)
 library(ggplot2)
-
+library(plotly)
 
 df <- read.csv("texas_20132018_envorgs_matched.csv")
 df <- clean_names(df)
@@ -111,10 +111,32 @@ tx <- get_map(
 
 gg <- ggmap(tx, extent='panel',padding=0) 
 
-map <- gg + geom_point(data = geocoded_df2017, aes(x=lon, y=lat, size=assets, color=assets, alpha=0.5), shape=20, stroke=4) + scale_color_viridis(option="viridis", trans="log", name="Assets in log $", direction = -1) + ggtitle("Distribution of Environmental NPO's in Texas (By asset size)") +guides(alpha = FALSE, size = FALSE) + theme(legend.position=c(.9,.15) , panel.grid = element_blank(),axis.title.y = element_blank(), axis.title.x = element_blank(), axis.ticks = element_blank(), rect = element_blank(), plot.title = element_text(size= 25, vjust = 1, hjust= 0.1, color = "#060418FF", margin = margin(b = -0.1, t = 0.4, l = 2, unit = "cm")), plot.background = element_rect(fill = "#f5f5f2", color = NA), panel.background = element_rect(fill = "#f5f5f2", color = NA), legend.background = element_rect(fill = "#f5f5f2", color = NA),) 
+map <- gg + geom_point(data = geocoded_df2017, aes(x=lon, y=lat, size=assets, color=assets, alpha=0.5), shape=20, stroke=4) + scale_color_viridis(option="viridis", trans="log", name="Assets in log $", direction = -1) + ggtitle("Distribution of Environmental NPO's in 2017 (By asset size)") +guides(alpha = FALSE, size = FALSE) + theme(legend.position=c(.9,.15) , panel.grid = element_blank(),axis.title.y = element_blank(), axis.title.x = element_blank(), axis.ticks = element_blank(), rect = element_blank(), plot.title = element_text(size= 25, vjust = 1, hjust= 0.1, color = "#060418FF", margin = margin(b = -0.1, t = 0.4, l = 2, unit = "cm")), plot.background = element_rect(fill = "#f5f5f2", color = NA), panel.background = element_rect(fill = "#f5f5f2", color = NA), legend.background = element_rect(fill = "#f5f5f2", color = NA),) + theme_void()
    
 map     
         
 
+
+```
+
+```{r, Plotly}
+
+# Rorder data + Add a new column with tooltip text
+geocoded_plotly <- 
+  mutate(geocoded_df2017, mytext=paste(
+    "NPO Name: ", name, "\n", 
+    "Assets: $", assets, sep="")
+  )
+
+# Make the map (static)
+map_plotly <- gg + geom_point(data = geocoded_plotly, aes(x=lon, y=lat, size=assets, color=assets, alpha=0.5, text =mytext), shape=20, stroke=1) + scale_color_viridis(option="viridis", trans="log", name="Assets in log $", direction = -1) + ggtitle("Distribution of Environmental NPO's in 2017 (By asset size)") +guides(alpha = FALSE, size = FALSE) + theme(legend.position=c(.9,.15) , panel.grid = element_blank(),axis.title.y = element_blank(), axis.title.x = element_blank(), axis.ticks = element_blank(), rect = element_blank(), plot.title = element_text(size= 25, vjust = 1, hjust= 0.1, color = "#060418FF", margin = margin(b = -0.1, t = 0.4, l = 2, unit = "cm")), plot.background = element_rect(fill = "#f5f5f2", color = NA), panel.background = element_rect(fill = "#f5f5f2", color = NA), legend.background = element_rect(fill = "#f5f5f2", color = NA),) + theme_void()
+
+map_plotly <- ggplotly(map_plotly, tooltip="text")
+
+map_plotly
+
+# save the widget in a html file if needed.
+# library(htmlwidgets)
+# saveWidget(p, file=paste0( getwd(), "/HtmlWidget/bubblemapUK.html"))
 
 ```
