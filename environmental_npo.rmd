@@ -59,11 +59,6 @@ for (i in 1:length(df_filled$taxpayer_name)){
            }
 }
 
-for (i in 1:length(df_filled$assets)){
-           if(df_filled$assets[i] == 0){        
-                    df_filled$assets[i] <- 1              
-           }
-}
 
 df_filled <- select(df_filled, ein, real_year, taxpayer_name,address, city, state, zip5, fips, assets, income)
 
@@ -74,14 +69,20 @@ df_filled <- mutate(df_filled, full_address2 = paste(full_address, zip5))
 df_filled <- select(df_filled, ein, real_year, taxpayer_name, full_address2, fips, assets, income)
 df_filled <- rename( df_filled, address = full_address2, name = taxpayer_name)
 
-
+for (i in 1:length(df_filled$assets)){
+           if(df_filled$assets[i] == 0){        
+                    df_filled$assets[i] <- 1              
+           }
+}
 ```
 
 ```{r, geocoding}
-geocoded_df <- df_filled %>% mutate_geocode(address)
-geocoded_df2017 <- filter(geocoded_df, real_year == 2017)
 
-write.csv(geocoded_df,"geocoded_df.csv")
+geocoded_df2017 <- df_filled %>% filter(real_year == 2017) %>% mutate_geocode(address)
+#geocoded_df <- df_filled %>% mutate_geocode(address)
+
+
+#write.csv(geocoded_df,"geocoded_df.csv")
 
 ```
 
@@ -136,7 +137,7 @@ map_plotly <- ggplotly(map_plotly, tooltip="text")
 map_plotly
 
 # save the widget in a html file if needed.
-# library(htmlwidgets)
-# saveWidget(p, file=paste0( getwd(), "/HtmlWidget/bubblemapUK.html"))
+library(htmlwidgets)
+htmlwidgets::saveWidget(map_plotly, file="environmental_npos_texas.html", selfcontained = FALSE)
 
 ```
